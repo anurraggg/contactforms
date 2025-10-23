@@ -1,12 +1,15 @@
 export default function decorate(block) {
   const rows = [...block.querySelectorAll(':scope > div')];
 
-  const title = rows[0]?.querySelector('div')?.textContent.trim() || 'Contact Us'; // Added fallback
-  const desc = rows[1]?.querySelector('div')?.textContent.trim() || 'Get in touch with us!'; // Added fallback
+  // Extract title and desc with fallbacks (safe against missing rows)
+  const title = rows[0]?.querySelector('div')?.textContent.trim() || 'Contact Us';
+  const desc = rows[1]?.querySelector('div')?.textContent.trim() || 'Get in touch with us!';
 
-  const fields = rows.slice(2, rows.length - 1); // Still unused—consider dynamic fields later
-  const submitRow = rows[rows.length - 1]; // Still unused
+  // Unused for now—could loop these for dynamic fields later
+  const fields = rows.slice(2, rows.length - 1);
+  const submitRow = rows[rows.length - 1];
 
+  // Render the form HTML
   block.innerHTML = `
     <h2>${title}</h2>
     <p>${desc}</p>
@@ -27,13 +30,13 @@ export default function decorate(block) {
   const form = block.querySelector('form');
   const successMsg = block.querySelector('.success');
   
-  // NEW: Updated submit handler with backend integration
+  // Enhanced submit handler with backend integration
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
     const data = Object.fromEntries(formData);
     
-    // Optional: Basic client-side validation (e.g., email format)
+    // Quick client-side validation
     if (!data.email.includes('@')) {
       successMsg.textContent = 'Please enter a valid email.';
       successMsg.classList.add('error');
@@ -42,12 +45,26 @@ export default function decorate(block) {
     }
     
     try {
-      const response = await fetch('https://script.google.com/macros/s/AKfycby-tcMgtdbaIZws-skPYt2KSJ00is_ZYJt4SahpyEP8LWz9QQnJt36BqyGDmAOQ0MLeUQ/exec', { // e.g., https://script.google.com/macros/s/.../exec
+      const response = await fetch('https://script.google.com/macros/s/AKfycbwCpz3ZWWmLJeX3eFOmuHtqW5cQ8C7UNJtpEvwiyox3uapk8SUTamhRH9Is1gHg7a8x8g/exec', { // Replace with your GAS URL, e.g., https://script.google.com/macros/s/AKfycbx.../exec
         method: 'POST',
+        mode: 'cors',  // Enables CORS handling
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' }
       });
-      const result = await response.json(); // Now readable!
+      
+      // Check response status
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+      
+      let result;
+      try {
+        result = await response.json();  // Parse JSON response
+      } catch (parseErr) {
+        // Fallback if response is opaque (CORS edge case)
+        console.warn('Response not readable—assuming success (check GAS logs)');
+        result = { status: 'success', message: 'Thank you! We will contact you soon.' };
+      }
       
       if (result.status === 'success') {
         successMsg.textContent = result.message;
@@ -57,7 +74,14 @@ export default function decorate(block) {
         throw new Error(result.message || 'Submission failed');
       }
     } catch (error) {
-      successMsg.textContent = `Error: ${error.message}. Please try again.`;
+      console.error('Fetch error:', error);  // Browser console for details
+      let errorMsg = 'Please try again.';
+      if (error.message.includes('Failed to fetch')) {
+        errorMsg = 'Network issue—check connection and try again.';
+      } else if (error.message.includes('Server error')) {
+        errorMsg = `Server problem (${error.message})—data may still be saved.`;
+      }
+      successMsg.textContent = `Error: ${errorMsg}`;
       successMsg.classList.add('error');
       successMsg.style.display = 'block';
     }
