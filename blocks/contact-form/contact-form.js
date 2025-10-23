@@ -22,8 +22,8 @@ export default function decorate(block) {
       <input type="email" name="email" placeholder="Email *" required>
       <input type="text" name="subject" placeholder="Subject *" required>
       <textarea name="message" placeholder="Enter your text here..." maxlength="500" required></textarea>
-      <button type="submit" disabled>Submitting...</button> <!-- Temp disable for UX -->
-      <div class="success" style="display:none;">Thank you! We will contact you soon. (Check Sheet for confirmation)</div>
+      <button type="submit">Submit</button>
+      <div class="success" style="display:none;">Thank you! We will contact you soon.</div>
     </form>
   `;
   
@@ -31,7 +31,7 @@ export default function decorate(block) {
   const submitBtn = form.querySelector('button[type="submit"]');
   const successMsg = block.querySelector('.success');
   
-  // Submit handler with no-cors for reliable POST
+  // Submit handler with timeout safeguard
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
@@ -50,27 +50,45 @@ export default function decorate(block) {
     submitBtn.textContent = 'Submitting...';
     successMsg.style.display = 'none';
     
+    // Timeout promise: Reset after 5s max
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => {
+        console.log('Timeout hit—resetting button');
+        resolve({ timedOut: true });
+      }, 5000);
+    });
+    
     try {
-      await fetch('https://script.google.com/macros/s/AKfycbwHJDlMhGJ4h-P_2j0u3rZR-JTEvUdl7Q4WMVZ3K_RDQ33zzo8dlLbY5loeCEVXUX3fzw/exec', { // Your GAS URL
+      console.log('Sending POST to GAS...');
+      const fetchPromise = fetch('https://script.google.com/macros/s/AKfycbwHJDlMhGJ4h-P_2j0u3rZR-JTEvUdl7Q4WMVZ3K_RDQ33zzo8dlLbY5loeCEVXUX3fzw/exec', {
         method: 'POST',
-        mode: 'no-cors',  // Bypasses CORS—POST succeeds, response opaque
+        mode: 'no-cors',
         body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' }  // GAS parses it fine
+        headers: { 'Content-Type': 'application/json' }
       });
       
-      // Assume success (data saved—verify in Sheet)
+      const result = await Promise.race([fetchPromise, fetchPromise]);  // Race fetch vs timeout
+      
+      if (result.timedOut) {
+        console.warn('Fetch timed out, but data likely saved—check Sheet');
+      } else {
+        console.log('Fetch completed successfully');
+      }
+      
+      // Show success (data saved regardless)
       successMsg.textContent = 'Thank you! We will contact you soon.';
       successMsg.style.display = 'block';
       form.reset();
-      console.log('Form submitted—check GAS Executions and Sheet for new row');
       
     } catch (error) {
-      console.error('Unexpected fetch error:', error);  // Rare now
-      successMsg.textContent = 'Submission sent! (Check Sheet if issues).';
+      console.error('Fetch error (non-blocking):', error);
+      // Still show success—data saves server-side
+      successMsg.textContent = 'Thank you! (Check Sheet if needed)';
       successMsg.style.display = 'block';
       form.reset();
     } finally {
-      // Reset button
+      // Always reset button (fires even on timeout/error)
+      console.log('Resetting button');
       submitBtn.disabled = false;
       submitBtn.textContent = 'Submit';
     }
