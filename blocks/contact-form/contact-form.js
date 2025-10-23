@@ -42,7 +42,7 @@ export default function decorate(block) {
     }
     
     try {
-      const response = await fetch('YOUR_WEB_APP_URL_HERE', { // e.g., https://script.google.com/macros/s/.../exec
+      const response = await fetch('https://script.google.com/macros/s/AKfycby-tcMgtdbaIZws-skPYt2KSJ00is_ZYJt4SahpyEP8LWz9QQnJt36BqyGDmAOQ0MLeUQ/exec', { // e.g., https://script.google.com/macros/s/.../exec
         method: 'POST',
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' }
