@@ -45,7 +45,7 @@ export default function decorate(block) {
     }
     
     try {
-      const response = await fetch('https://script.google.com/macros/s/AKfycbwCpz3ZWWmLJeX3eFOmuHtqW5cQ8C7UNJtpEvwiyox3uapk8SUTamhRH9Is1gHg7a8x8g/exec', { // Replace with your GAS URL, e.g., https://script.google.com/macros/s/AKfycbx.../exec
+      const response = await fetch('https://script.google.com/macros/s/AKfycbwHJDlMhGJ4h-P_2j0u3rZR-JTEvUdl7Q4WMVZ3K_RDQ33zzo8dlLbY5loeCEVXUX3fzw/exec', { // Replace with your GAS URL, e.g., https://script.google.com/macros/s/AKfycbx.../exec
         method: 'POST',
         mode: 'cors',  // Enables CORS handling
         body: JSON.stringify(data),
