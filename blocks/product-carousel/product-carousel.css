@@ -130,28 +130,75 @@
     background-color: #d71a28;
   }
   
-  /* Responsive */
-  @media (max-width: 768px) {
+  /* ---------------------------------------------
+   📱 MOBILE VIEW (below 768px)
+--------------------------------------------- */
+@media (max-width: 768px) {
+    /* Stack image above text */
     .product-carousel__slide {
       grid-template-columns: 1fr;
+      gap: 16px;
       text-align: center;
-      padding: 0 20px;
+      justify-items: center;
     }
   
+    /* Keep height consistent between slides */
+    .product-carousel__wrapper {
+      min-height: 420px; /* Adjust to match tallest product image */
+    }
+  
+    /* Image sizing & alignment */
+    .product-carousel__left img {
+      width: 80%;
+      max-width: 280px;
+      height: 320px;       /* Fixed height for consistency */
+      object-fit: contain; /* Prevent stretch/crop */
+      margin: 0 auto;
+    }
+  
+    /* Center-align the right column (text) */
     .product-carousel__right {
       text-align: center;
+      padding: 0 16px;
     }
   
+    .product-carousel__right h3 {
+      font-size: 1.3rem;
+      line-height: 1.4;
+    }
+  
+    .product-carousel__right p {
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+  
+    /* Adjust arrows to bottom corners */
     .product-carousel__nav {
-      top: 45%;
+      position: absolute;
+      top: 15rem;
+      bottom: 100px;
+      transform: none;
+      width: 36px;
+      height: 36px;
+      font-size: 1.3rem;
     }
   
     .product-carousel__prev {
-      left: 3%;
+      left: 5%;
     }
   
     .product-carousel__next {
-      right: 3%;
+      right: 5%;
+    }
+  
+    /* Center dots below content */
+    .product-carousel__dots {
+      margin-top: 20px;
+    }
+  
+    .product-carousel__dot {
+      width: 10px;
+      height: 10px;
     }
   }
   
