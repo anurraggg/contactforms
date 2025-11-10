@@ -1,27 +1,30 @@
 export default function decorate(block) {
+    console.log('✅ Product Carousel JS loaded!');
+  
     block.classList.add('product-carousel');
   
-    // Find the source table
-    const table = block.querySelector('table');
-    if (!table) return;
+    // Find the table (even if wrapped inside a div)
+    const table = block.querySelector('table, div > table');
+    if (!table) {
+      console.warn('⚠️ No table found inside product-carousel block');
+      return;
+    }
   
     const rows = table.querySelectorAll('tr');
     const slides = [];
   
-    // Parse rows (skip first header row)
+    // Parse rows and skip header
     rows.forEach((row, index) => {
-      if (index === 0) return; // skip header
       const cells = row.querySelectorAll('td');
       if (cells.length >= 3) {
-        // Handle image cell (either <img> or URL text)
+        const firstCell = cells[0].innerText.trim().toLowerCase();
+        if (firstCell === 'product carousel' || index === 0) return; // skip header
+  
+        // Detect image
         let imgSrc = '';
         const imgEl = cells[0].querySelector('img');
-        if (imgEl) {
-          imgSrc = imgEl.src;
-        } else {
-          const text = cells[0].innerText.trim();
-          if (text.match(/^https?:\/\//)) imgSrc = text;
-        }
+        if (imgEl) imgSrc = imgEl.src;
+        else if (cells[0].innerText.match(/^https?:\/\//)) imgSrc = cells[0].innerText.trim();
   
         slides.push({
           image: imgSrc,
@@ -31,12 +34,16 @@ export default function decorate(block) {
       }
     });
   
-    // If no slides found, abort safely
-    if (slides.length === 0) return;
+    console.log('Slides found:', slides);
   
-    // Start building the carousel
-    const carouselWrapper = document.createElement('div');
-    carouselWrapper.className = 'product-carousel__wrapper';
+    if (slides.length === 0) {
+      console.warn('⚠️ No valid slides detected in table');
+      return;
+    }
+  
+    // Build wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'product-carousel__wrapper';
   
     slides.forEach((slide, i) => {
       const slideEl = document.createElement('div');
@@ -53,19 +60,18 @@ export default function decorate(block) {
   
       const right = document.createElement('div');
       right.className = 'product-carousel__right';
-      const title = document.createElement('h3');
-      title.textContent = slide.title;
-      const desc = document.createElement('p');
-      desc.textContent = slide.description;
-      right.append(title, desc);
+      right.innerHTML = `
+        <h3>${slide.title}</h3>
+        <p>${slide.description}</p>
+      `;
   
       slideEl.append(left, right);
-      carouselWrapper.appendChild(slideEl);
+      wrapper.appendChild(slideEl);
     });
   
-    // Clear block and rebuild
+    // Replace old content with new carousel structure
     block.innerHTML = '';
-    block.appendChild(carouselWrapper);
+    block.appendChild(wrapper);
   
     // Navigation buttons
     const prevBtn = document.createElement('button');
@@ -76,7 +82,7 @@ export default function decorate(block) {
     nextBtn.className = 'product-carousel__nav product-carousel__next';
     nextBtn.innerHTML = '→';
   
-    // Dots
+    // Dots navigation
     const dots = document.createElement('div');
     dots.className = 'product-carousel__dots';
     slides.forEach((_, i) => {
@@ -88,16 +94,14 @@ export default function decorate(block) {
   
     block.append(prevBtn, nextBtn, dots);
   
-    // JS Logic
+    // Carousel logic
     let current = 0;
+    const allSlides = block.querySelectorAll('.product-carousel__slide');
+    const allDots = block.querySelectorAll('.product-carousel__dot');
   
     function showSlide(index) {
-      const allSlides = block.querySelectorAll('.product-carousel__slide');
-      const allDots = block.querySelectorAll('.product-carousel__dot');
-      if (!allSlides[index]) return; // guard for undefined
-  
-      allSlides.forEach(s => s.classList.remove('active'));
-      allDots.forEach(d => d.classList.remove('active'));
+      allSlides.forEach((s) => s.classList.remove('active'));
+      allDots.forEach((d) => d.classList.remove('active'));
       allSlides[index].classList.add('active');
       allDots[index].classList.add('active');
     }
@@ -112,7 +116,7 @@ export default function decorate(block) {
       showSlide(current);
     });
   
-    dots.querySelectorAll('.product-carousel__dot').forEach((dot, i) => {
+    allDots.forEach((dot, i) => {
       dot.addEventListener('click', () => {
         current = i;
         showSlide(i);
